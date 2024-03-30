@@ -19,9 +19,16 @@ from google.cloud.aiplatform import version as aiplatform_version
 __version__ = aiplatform_version.__version__
 
 from google.cloud.aiplatform import init
-from vertexai import preview
+
+
+def __getattr__(name):
+    if name == "preview":
+
+        from vertexai import preview
+        return preview
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 __all__ = [
     "init",
-    "preview",
+    # "preview",
 ]
