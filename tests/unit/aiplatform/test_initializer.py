@@ -451,6 +451,36 @@ class TestInit:
         initializer.global_config.init(project=_TEST_PROJECT_2)
         assert initializer.global_config.credentials is creds
 
+    def test_create_client_with_request_metadata(self):
+        global_metadata = {
+            "global_param": "value1",
+        }
+        request_metadata = [
+            ("request_param", "value2"),
+        ]
+        initializer.global_config.init(
+            project=_TEST_PROJECT,
+            location=_TEST_LOCATION,
+            request_metadata=global_metadata,
+            api_transport="rest",
+        )
+        client: utils.ModelClientWithOverride = initializer.global_config.create_client(
+            client_class=utils.ModelClientWithOverride
+        )
+        model_name = client.model_path(
+            project=_TEST_PROJECT,
+            location=_TEST_LOCATION,
+            model="model_id",
+        )
+        with patch("requests.sessions.Session.get") as mock_get:
+            mock_get.return_value.status_code = 200
+            mock_get.return_value.content = "{}"
+            client.get_model(name=model_name, metadata=request_metadata)
+            call_kwargs = mock_get.call_args_list[0][1]
+            headers = call_kwargs["headers"]
+            for metadata_key in ["global_param", "request_param"]:
+                assert metadata_key in headers
+
 
 class TestThreadPool:
     def teardown_method(self):

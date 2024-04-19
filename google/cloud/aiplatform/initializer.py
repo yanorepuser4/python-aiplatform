@@ -21,7 +21,7 @@ import inspect
 import logging
 import os
 import types
-from typing import Iterator, List, Optional, Type, TypeVar, Union
+from typing import Iterator, List, Mapping, Optional, Type, TypeVar, Union
 
 from google.api_core import client_options
 from google.api_core import gapic_v1
@@ -108,6 +108,7 @@ class _Config:
         self._service_account = None
         self._api_endpoint = None
         self._api_transport = None
+        self._request_metadata = None
 
     def init(
         self,
@@ -126,6 +127,7 @@ class _Config:
         service_account: Optional[str] = None,
         api_endpoint: Optional[str] = None,
         api_transport: Optional[str] = None,
+        request_metadata: Optional[Mapping[str, str]] = None,
     ):
         """Updates common initialization parameters with provided options.
 
@@ -188,6 +190,8 @@ class _Config:
                 Optional. The transport method which is either 'grpc' or 'rest'.
                 NOTE: "rest" transport functionality is currently in a
                 beta state (preview).
+            request_metadata:
+                Optional. Additional gRPC metadata to send with every client request.
         Raises:
             ValueError:
                 If experiment_description is provided but experiment is not.
@@ -235,6 +239,8 @@ class _Config:
             self._network = network
         if service_account is not None:
             self._service_account = service_account
+        if request_metadata:
+            self._request_metadata = request_metadata
 
         # Finally, perform secondary state updates
         if experiment_tensorboard and not isinstance(experiment_tensorboard, bool):
@@ -517,7 +523,29 @@ class _Config:
             else:
                 kwargs["transport"] = self._api_transport
 
-        return client_class(**kwargs)
+        if self._request_metadata:
+            # TODO(b/341382499): Remove once GAPIC supports additional metadata.
+            # We need to make the client not temporary,
+            # otherwise client is recreated every time.
+            old_is_temporary = client_class._is_temporary
+            try:
+                client_class._is_temporary = False
+                client = client_class(**kwargs)
+            finally:
+                client_class._is_temporary = old_is_temporary
+
+            # TODO(b/341382499): Remove once GAPIC supports additional metadata.
+            # Hack to patch additional metadata into GAPIC clients
+            # Not checking for the the presence of attributes since we cannot
+            # handle the absence of these attributes
+            for gapic_callable in client._transport._wrapped_methods.values():
+                for item in self._request_metadata.items():
+                    if item not in gapic_callable._metadata:
+                        gapic_callable._metadata.append(item)
+        else:
+            client = client_class(**kwargs)
+
+        return client
 
 
 # global config to store init parameters: ie, aiplatform.init(project=..., location=...)
