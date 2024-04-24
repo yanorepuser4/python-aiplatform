@@ -16,6 +16,7 @@
 #
 
 # pylint: disable=protected-access,bad-continuation
+import io
 import pytest
 from typing import Iterable, MutableSequence, Optional
 from unittest import mock
@@ -906,6 +907,28 @@ class TestGenerativeModels:
         with pytest.raises(RuntimeError) as err:
             chat2.send_message("What is the weather like in Boston?")
         assert err.match("Exceeded the maximum")
+
+    @pytest.mark.parametrize(
+        "generative_models",
+        [generative_models, preview_generative_models],
+    )
+    def test_image_mime_types(self, generative_models: generative_models):
+        # Importing external library lazily to reduce the scope
+        from PIL import Image as PIL_Image  # pylint: disable=g-import-not-at-top
+
+        image_format_to_mime_type = {
+            "PNG": "image/png",
+            "JPEG": "image/jpeg",
+            "GIF": "image/gif",
+        }
+
+        pil_image: PIL_Image.Image = PIL_Image.new(mode="RGB", size=(200, 200))
+        for image_format, mime_type in image_format_to_mime_type.items():
+            image_bytes_io = io.BytesIO()
+            pil_image.save(image_bytes_io, format=image_format)
+            image = generative_models.Image.from_bytes(image_bytes_io.getvalue())
+            image_part = generative_models.Part.from_image(image)
+            assert image_part.mime_type == mime_type
 
 
 EXPECTED_SCHEMA_FOR_GET_CURRENT_WEATHER = {
