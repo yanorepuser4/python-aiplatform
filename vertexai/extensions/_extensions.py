@@ -68,6 +68,22 @@ _VERTEX_EXTENSION_HUB = {
             },
         },
     },
+    "webpage_browser": {
+        "display_name": "Webpage Browser",
+        "description": "This extension fetchs the content of a webpage",
+        "manifest": {
+            "name": "webpage_browser",
+            "description": "Vertex Webpage Browser Extension",
+            "api_spec": {
+                "open_api_gcs_uri": (
+                    "gs://vertex-extension-public/webpage_browser.yaml"
+                ),
+            },
+            "auth_config": {
+                "auth_type": "NO_AUTH",
+            },
+        },
+    }
 }
 
 
@@ -247,7 +263,8 @@ class Extension(base.VertexAiResourceNounWithFutureManager):
         Args:
             name (str):
                 Required. The name of the extension in the hub to be created.
-                Supported values are "code_interpreter" and "vertex_ai_search".
+                Supported values are "code_interpreter", "vertex_ai_search" and
+                "webpage_browser".
             runtime_config (Union[dict[str, Any], RuntimeConfig]):
                 Optional. Runtime config controlling the runtime behavior of
                 the Extension. Defaults to None.
@@ -288,6 +305,11 @@ class Extension(base.VertexAiResourceNounWithFutureManager):
                 raise ValueError(
                     "vertex_ai_search_runtime_config is required for "
                     "vertex_ai_search extension"
+                )
+        elif name == "webpage_browser":
+            if runtime_config:
+                raise ValueError(
+                    "webpage_browser extension does not support runtime config"
                 )
         else:
             raise ValueError(f"Unsupported 1P extension name: {name}")
