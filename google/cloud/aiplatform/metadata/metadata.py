@@ -467,6 +467,10 @@ class _ExperimentTracker:
                 but with a different schema.
         """
 
+        _LOGGER.warning(
+            "Changes detected (testing only, remove before submission)",
+        )
+
         if not self.experiment:
             raise ValueError(
                 "No experiment set for this run. Make sure to call aiplatform.init(experiment='my-experiment') "
@@ -491,6 +495,8 @@ class _ExperimentTracker:
             self._experiment_run = experiment_run_resource.ExperimentRun.create(
                 run_name=run, experiment=self.experiment, tensorboard=tensorboard
             )
+
+        _ipython_utils.display_experiment_run_button(self._experiment_run)
 
         return self._experiment_run
 
