@@ -1200,11 +1200,9 @@ class _VertexAiResourceNounPlus(VertexAiResourceNoun):
         """Deletes this Vertex AI resource. WARNING: This deletion is permanent."""
         _LOGGER.log_action_start_against_resource("Deleting", "", self)
         lro = getattr(self.api_client, self._delete_method)(name=self.resource_name)
-        _LOGGER.log_action_started_against_resource_with_lro(
-            "Delete", "", self.__class__, lro
-        )
+        _LOGGER.log_delete_with_lro(self, lro)
         lro.result()
-        _LOGGER.log_action_completed_against_resource("deleted.", "", self)
+        _LOGGER.log_delete_complete(self)
 
 
 class VertexAiResourceNounWithFutureManager(_VertexAiResourceNounPlus, FutureManager):

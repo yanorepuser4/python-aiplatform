@@ -24,6 +24,7 @@ from unittest.mock import patch
 import uuid
 
 from google import auth
+from google.cloud.aiplatform import base
 from google.api_core import operation as ga_operation
 from google.auth import credentials as auth_credentials
 from google.cloud.logging import Logger
@@ -64,6 +65,7 @@ from feature_store_constants import (
     _TEST_OPTIMIZED_FV2,
     _TEST_PSC_OPTIMIZED_FOS,
     _TEST_OPTIMIZED_EMBEDDING_FV,
+    _TEST_FG1,
     _TEST_FG1_F1,
     _TEST_FG1_F2,
 )
@@ -304,6 +306,16 @@ def mock_cloud_logging_list_entries():
 
 
 @pytest.fixture
+def base_logger_mock():
+    with patch.object(
+        base._LOGGER,
+        "info",
+        wraps=base._LOGGER.info,
+    ) as logger_mock:
+        yield logger_mock
+
+
+@pytest.fixture
 def persistent_resource_running_mock():
     with mock.patch.object(
         PersistentResourceServiceClient,
@@ -501,6 +513,16 @@ def get_optimized_fv_no_endpointmock():
     ) as get_optimized_fv_no_endpointmock:
         get_optimized_fv_no_endpointmock.return_value = _TEST_OPTIMIZED_FV2
         yield get_optimized_fv_no_endpointmock
+
+
+@pytest.fixture
+def get_fg_mock():
+    with patch.object(
+        feature_registry_service_client.FeatureRegistryServiceClient,
+        "get_feature_group",
+    ) as get_fg_mock:
+        get_fg_mock.return_value = _TEST_FG1
+        yield get_fg_mock
 
 
 @pytest.fixture
