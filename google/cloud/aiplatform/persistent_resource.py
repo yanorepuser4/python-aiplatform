@@ -420,3 +420,37 @@ class PersistentResource(base.VertexAiResourceNounWithFutureManager):
             location=location,
             credentials=credentials,
         )
+
+    @base.optional_sync()
+    def reboot(
+        cls,
+        sync: Optional[bool] = True,  # pylint: disable=unused-argument
+    ) -> None:
+        """Reboots a Persistent Resource in the provided project and region.
+
+        Args:
+            name (str):
+                Required. The name of the PersistentResource resource.
+                Name should be in the following format:
+                ``projects/{project_id_or_number}/locations/{location_id}/persistentResources/{persistent_resource_id}``
+
+                This corresponds to the ``name`` field
+                on the ``request`` instance; if ``request`` is provided, this
+                should not be set.
+            sync (bool):
+                Whether to execute this method synchonously. If False, this
+                method will be executed in concurrent Future and any downstream
+                object will be immediately returned and synced when the Future
+                has completed.
+
+        Returns:
+            None
+        """
+
+        _LOGGER.log_action_start_against_resource("Rebooting", "", cls)
+        lro = cls.api_client.reboot_persistent_resource(name=cls.resource_name)
+        _LOGGER.log_action_started_against_resource_with_lro(
+            "Reboot", "", cls.__class__, lro
+        )
+        lro.result()
+        _LOGGER.log_action_completed_against_resource("rebooted.", "", cls)
